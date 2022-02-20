@@ -38,24 +38,24 @@
 
       <div class="jumbotron">
 		  <h2>Approve this client?</h2>
-		  {{ if .client.client_name != nil }}
+		  {{ if ne .client.client_name nil }}
 		  <p><b>Name:</b> <code>{{ .client.client_name }}</code></p>
 		  {{ end }}
 		  <p><b>ID:</b> <code>{{ .client.client_id }}</code></p>
-		  {{ if .client.client_uri != nil }}
+		  {{ if ne .client.client_uri nil }}
 		  <p><b>URI:</b> <code>{{ .client.client_uri }}</code></p>
 		  {{ end }}
-		  {{ if .client.logo_uri != nil }}
-		  <p><b>logo:</b> <img src="{{ client.logo_uri }}" /></p>
+		  {{ if ne .client.logo_uri  nil }}
+		  <p><b>logo:</b> <img src="{{ .client.logo_uri }}" /></p>
 		  {{ end }}
 
 		   <form class="form" action="/approve" method="POST">
-			   <input type="hidden" name="reqid" value="{{ reqid }}">
-			   {{ if scope != nil }}
+			   <input type="hidden" name="reqid" value="{{ .reqid }}">
+			   {{ if ne .scopes nil }}
 			   <p>The client is requesting access to the following:</p>
 			   <ul>
-			      {{ range $_, $s := scope }}
-			   	  <li><input type="checkbox" name="scope_{{ s }}" id="scope_{{ s }}" checked="checked"> <label for="scope_{{ s }}">{{ s }}</label></li>
+			      {{ range $_, $s := .scopes }}
+			   	  <li><input type="checkbox" name="scope_{{ $s }}" id="scope_{{ $s }}" checked="checked"> <label for="scope_{{ $s }}">{{ $s }}</label></li>
 				  {{ end }}
 		       </ul>
 			   {{ end }}

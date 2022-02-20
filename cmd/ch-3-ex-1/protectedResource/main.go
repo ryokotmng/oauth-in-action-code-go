@@ -1,30 +1,69 @@
 package main
 
 import (
+	"context"
 	"embed"
+	"errors"
 	"fmt"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"html/template"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
+	"strings"
 )
+
+var resourceDetail = map[string]string{
+	"name":        "Protected Resource",
+	"description": "This data has been protected by OAuth 2.0",
+}
 
 //go:embed views
 var clientFS embed.FS
 
-func main() {
-	engine := gin.Default()
-	tmpl := template.Must(template.ParseFS(clientFS, "views/index.html"))
-	engine.SetHTMLTemplate(tmpl)
+func getAccessToken(c *gin.Context) {
+	// check the auth header first
+	auth := c.Request.Header.Get("authorization")
+	var inToken string
+	if auth != "" && strings.Contains(strings.ToLower(auth), "bearer") {
+		inToken = auth
+	} else if c.Request.Body != nil {
+		// not in the header, check in the form body
+	} else {
+		inToken = ""
+	}
+	fmt.Printf("Incoming token: %s", inToken)
+	// TODO: put the generated token into Redis
+	c.Request.WithContext(context.WithValue(c, "access_token", inToken))
+}
 
-	engine.GET("/", func(c *gin.Context) {
+func main() {
+	router := gin.Default()
+	tmpl := template.Must(template.ParseFS(clientFS, "views/index.html"))
+	router.SetHTMLTemplate(tmpl)
+	router.Use(cors.Default())
+	router.Use(getAccessToken)
+	router.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", nil)
 	})
-	engine.POST("/resource", resource())
-	engine.Run(":9002")
+	router.POST("/resource", resource)
+	router.Run(":9002")
 	fmt.Println("OAuth Resource Server is listening at http://localhost:9002")
 }
 
-func resource() gin.HandlerFunc {
-	return func(c *gin.Context) {}
+func resource(c *gin.Context) {
+	if getRequestTokenFromContext(c) != "" {
+		c.JSON(200, resourceDetail)
+	} else {
+		c.Error(errors.New(""))
+	}
+}
+
+func getRequestTokenFromContext(c *gin.Context) string {
+	if c == nil {
+		return ""
+	}
+	if token, ok := c.Value("access_token").(string); ok {
+		return token
+	}
+	return ""
 }

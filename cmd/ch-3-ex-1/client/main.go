@@ -2,8 +2,10 @@ package main
 
 import (
 	"embed"
+	"encoding/base64"
 	"html/template"
 	"net/http"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,54 +33,54 @@ var demoClient = client{
 var clientFS embed.FS
 
 func main() {
-	engine := gin.Default()
-	tmpl := template.Must(template.New("").Funcs(template.FuncMap{"add": func(a, b int) int {
-		return a + b
-	}}).ParseFS(clientFS, "views/*.html"))
-	engine.SetHTMLTemplate(tmpl)
+	router := gin.Default()
+	// tmpl := template.Must(template.New("").Funcs(template.FuncMap{"add": func(a, b int) int {
+	// 	return a + b
+	// }}).ParseFS(clientFS, "views/*.html"))
+	tmpl := template.Must(template.ParseFS(clientFS, "views/*.html"))
+	router.SetHTMLTemplate(tmpl)
 
-	engine.GET("/", func(c *gin.Context) {
+	router.GET("/", func(c *gin.Context) {
 		viewData := gin.H{
 			"accessToken": "NONE",
 		}
 		c.HTML(http.StatusOK, "index.html", viewData)
 	})
-	engine.GET("/authorize", authorize())
-	engine.GET("/callback", callback())
-	engine.GET("/fetch_resource", fetchResource())
-	engine.Run(":9000")
+	router.GET("/authorize", authorize())
+	router.GET("/callback", callback())
+	router.GET("/fetch_resource", fetchResource())
+	router.Run(":9000")
 }
 
 func authorize() gin.HandlerFunc {
-
-	/*
-	 * Send the user to the authorization server
-	 */
 
 	return func(c *gin.Context) {}
 }
 
 func callback() gin.HandlerFunc {
 
-	/*
-	 * Parse the response from the authorization server and get a token
-	 */
-
 	return func(c *gin.Context) {}
 }
 
 func fetchResource() gin.HandlerFunc {
 
-	/*
-	 * Use the access token to call the resource server
-	 */
-
 	return func(c *gin.Context) {}
 }
 
-func buildUrl() {
+func buildUrl(base string, options, hash map[string]string) *url.URL {
+	newUrl, err := url.Parse(base)
+	if err != nil {
+		return nil
+	}
+
+	q := newUrl.Query()
+	for k, v := range options {
+		q.Set(k, v)
+	}
+	newUrl.RawQuery = q.Encode()
+	return newUrl
 }
 
-func encodeClientCredentials() string {
-	return ""
+func encodeClientCredentials(clientId, clientSecret string) *base64.Encoding {
+	return base64.NewEncoding(url.QueryEscape(clientId) + ":" + url.QueryEscape(clientSecret))
 }
