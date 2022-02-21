@@ -34,17 +34,17 @@ var clients = []client{
 var clientFS embed.FS
 
 func main() {
-	engine := gin.Default()
+	router := gin.Default()
 	tmpl := template.Must(template.ParseFS(clientFS, "views/index.html"))
-	engine.SetHTMLTemplate(tmpl)
+	router.SetHTMLTemplate(tmpl)
 
-	engine.GET("/", func(c *gin.Context) {
+	router.GET("/", func(c *gin.Context) {
 		viewData := gin.H{
 			"clients":  clients,
 			"authServer":        "NONE",
 		}
 		c.HTML(http.StatusOK, "index.html", viewData)
 	})
-	engine.Run(":9001")
+	router.Run(":9001")
 	fmt.Println("OAuth Authorization Server is listening at http://localhost:9000")
 }

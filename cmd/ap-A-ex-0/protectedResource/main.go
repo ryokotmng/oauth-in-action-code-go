@@ -13,13 +13,13 @@ import (
 var clientFS embed.FS
 
 func main() {
-	engine := gin.Default()
+	router := gin.Default()
 	tmpl := template.Must(template.ParseFS(clientFS, "views/index.html"))
-	engine.SetHTMLTemplate(tmpl)
+	router.SetHTMLTemplate(tmpl)
 
-	engine.GET("/", func(c *gin.Context) {
+	router.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", nil)
 	})
-	engine.Run(":9002")
+	router.Run(":9002")
 	fmt.Println("OAuth Resource Server is listening at http://localhost:9002")
 }
