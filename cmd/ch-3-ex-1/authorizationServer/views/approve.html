@@ -38,15 +38,15 @@
 
       <div class="jumbotron">
 		  <h2>Approve this client?</h2>
-		  {{ if ne .client.client_name nil }}
-		  <p><b>Name:</b> <code>{{ .client.client_name }}</code></p>
+		  {{ if ne .client.ClientName nil }}
+		  <p><b>Name:</b> <code>{{ .client.ClientName }}</code></p>
 		  {{ end }}
-		  <p><b>ID:</b> <code>{{ .client.client_id }}</code></p>
-		  {{ if ne .client.client_uri nil }}
-		  <p><b>URI:</b> <code>{{ .client.client_uri }}</code></p>
+		  <p><b>ID:</b> <code>{{ .client.ClientId }}</code></p>
+		  {{ if ne .client.ClientUri nil }}
+		  <p><b>URI:</b> <code>{{ .client.ClientUri }}</code></p>
 		  {{ end }}
-		  {{ if ne .client.logo_uri  nil }}
-		  <p><b>logo:</b> <img src="{{ .client.logo_uri }}" /></p>
+		  {{ if ne .client.LogoUri  nil }}
+		  <p><b>logo:</b> <img src="{{ .client.LogoUri }}" /></p>
 		  {{ end }}
 
 		   <form class="form" action="/approve" method="POST">

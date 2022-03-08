@@ -18,18 +18,18 @@ const (
 )
 
 type client struct {
-	clientId     string
-	clientSecret string
-	redirectURIs []string
-	scope        string
+	ClientId     string
+	ClientSecret string
+	RedirectURIs []string
+	Scope        string
 }
 
 var clients = map[string]client{
 	"oauth-client-1": {
-		clientId:     "oauth-client-1",
-		clientSecret: "oauth-client-secret-1",
-		redirectURIs: []string{"http://localhost:9000/callback"},
-		scope:        "foo bar",
+		ClientId:     "oauth-client-1",
+		ClientSecret: "oauth-client-secret-1",
+		RedirectURIs: []string{"http://localhost:9000/callback"},
+		Scope:        "foo bar",
 	},
 }
 
@@ -60,21 +60,21 @@ func main() {
 }
 
 func authorize(c *gin.Context) {
-	clientID := c.Request.URL.Query().Get("client_id")
+	clientID := c.Request.URL.Query().Get("clientId")
 	cl, ok := clients[clientID]
 	if !ok {
 		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": "Unknown client"})
 		return
 	}
 
-	uri := c.Request.URL.Query().Get("redirect_uri")
-	if !contains(cl.redirectURIs, uri) {
-		fmt.Sprintf("Mismatched redirect URI, expected %s got %s", cl.redirectURIs, uri)
+	uri := c.Request.URL.Query().Get("redirectUri")
+	if !contains(cl.RedirectURIs, uri) {
+		fmt.Sprintf("Mismatched redirect URI, expected %s got %s", cl.RedirectURIs, uri)
 		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": "Invalid redirect url"})
 		return
 	}
 	rscope := strings.Split(c.Request.URL.Query().Get("scope"), " ")
-	cscope := strings.Split(cl.scope, " ")
+	cscope := strings.Split(cl.Scope, " ")
 	if len(rscope) > len(cscope) {
 		redirectURI := c.Request.URL.Query().Get("redirect_uri")
 		url, err := url.Parse(redirectURI)
@@ -90,6 +90,7 @@ func authorize(c *gin.Context) {
 
 	reqid := randomString(8)
 
+	requests = map[string]url.Values{}
 	requests[reqid] = c.Request.URL.Query()
 
 	viewData := gin.H{

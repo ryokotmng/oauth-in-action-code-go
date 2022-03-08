@@ -40,10 +40,10 @@
 		  <h2>Client information:</h2>
 		  {{ range $_, $client := .clients }}
 		  <ul>
-			  <li><b>client_id:</b> <code>{{ $client.client_id }}</code></li>
-			  <li><b>client_secret:</b> <code>{{ $client.client_secret }}</code></li>
-			  <li><b>scope:</b> <code>{{ $client.scope }}</code></li>
-			  <li><b>redirect_uri:</b> <code>{{ $client.redirect_uris }}</code></li>
+			  <li><b>client_id:</b> <code>{{ $client.ClientId }}</code></li>
+			  <li><b>client_secret:</b> <code>{{ $client.ClientSecret }}</code></li>
+			  <li><b>scope:</b> <code>{{ $client.Scope }}</code></li>
+			  <li><b>redirect_uri:</b> <code>{{ $client.Redirect_uris }}</code></li>
 		   </ul>
            {{ end }}
 		   <h2>Server information:</h2>

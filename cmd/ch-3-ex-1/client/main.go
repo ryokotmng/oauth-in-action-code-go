@@ -1,19 +1,26 @@
 package main
 
 import (
+	"bytes"
 	"embed"
-	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/ryokotmng/oauth-in-action-code-go/cmd/ch-3-ex-1/pkg"
+	"github.com/ryokotmng/oauth-in-action-code-go/cmd/ch-3-ex-1/pkg/randomstring"
 	"html/template"
+	"io"
 	"net/http"
 	"net/url"
-
-	"github.com/gin-gonic/gin"
 )
 
 // authorization server information
 const (
+	// authServer
 	authorizationEndpoint = "http://localhost:9001/authorize"
 	tokenEndpoint         = "http://localhost:9001/token"
+
+	protectedResource = "http://localhost:9002/resource"
 )
 
 // client information
@@ -29,6 +36,16 @@ var demoClient = client{
 	redirectURIs: []string{"http://localhost:9000/callback"},
 }
 
+type tokenResponseBody struct {
+	accessToken string `json:"access_token"`
+}
+
+var (
+	state       string
+	accessToken string
+	scope       string
+)
+
 //go:embed views
 var clientFS embed.FS
 
@@ -41,46 +58,107 @@ func main() {
 	router.SetHTMLTemplate(tmpl)
 
 	router.GET("/", func(c *gin.Context) {
-		viewData := gin.H{
-			"accessToken": "NONE",
-		}
+		viewData := gin.H{"accessToken": accessToken, "scope": scope}
 		c.HTML(http.StatusOK, "index.html", viewData)
 	})
-	router.GET("/authorize", authorize())
-	router.GET("/callback", callback())
-	router.GET("/fetch_resource", fetchResource())
+	router.GET("/authorize", authorize)
+	router.GET("/callback", callback)
+	router.GET("/fetch_resource", fetchResource)
 	router.Run(":9000")
 }
 
-func authorize() gin.HandlerFunc {
+func authorize(c *gin.Context) {
+	state := randomstring.Generate(32)
+	authorizeUrl := buildUrl(authorizationEndpoint, &map[string]string{
+		"responseType": "code",
+		"clientId":     demoClient.clientId,
+		"redirectUri":  demoClient.redirectURIs[0],
+		"state":        state,
+	}, nil)
 
-	return func(c *gin.Context) {}
+	c.Writer.Status()
+	c.Redirect(302, authorizeUrl)
 }
 
-func callback() gin.HandlerFunc {
+func callback(c *gin.Context) {
 
-	return func(c *gin.Context) {}
+	// it's an error response, act accordingly
+	if c.Errors != nil {
+		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": c.Errors})
+		return
+	}
+
+	if s := pkg.GetStateFromContext(c.Request.Context()); s != state {
+		fmt.Printf("State DOES NOT MATCH: expected %s got %s", state, s)
+		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": "State value did not match"})
+		return
+	}
+
+	code := pkg.GetCodeFromContext(c)
+
+	formData, err := json.Marshal(map[string]string{
+		"grant_type":   "authorization_code",
+		"code":         code,
+		"redirect_uri": demoClient.redirectURIs[0],
+	})
+	if err != nil {
+		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Header("Content-Type", "application/x-www-form-urlencoded")
+	c.Header("Authorization", "Basic "+encodeClientCredentials(demoClient.clientId, demoClient.clientSecret))
+
+	tokRes, err := http.Post(tokenEndpoint, "application/json", bytes.NewBuffer(formData))
+	if err != nil {
+		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+	}
+
+	fmt.Printf("Requesting access token for code %s", code)
+	if tokRes.StatusCode >= 200 && tokRes.StatusCode < 300 {
+		body, err := io.ReadAll(tokRes.Body)
+		if err != nil {
+			c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+		}
+		defer func() {
+			err := tokRes.Body.Close()
+			if err != nil {
+				c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+			}
+		}()
+		var resBody tokenResponseBody
+		err = json.Unmarshal(body, &resBody)
+		if err != nil {
+			c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": fmt.Sprintf("Unable to fetch access token, err: %v", err.Error())})
+			return
+		}
+		fmt.Printf("Got access token: %s", resBody.accessToken)
+
+		c.HTML(http.StatusOK, "index.html", gin.H{"accessToken": accessToken, "scope": scope})
+		return
+	}
+
+	c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": fmt.Sprintf("Unable to fetch access token, server response: %v", tokRes.StatusCode)})
 }
 
-func fetchResource() gin.HandlerFunc {
+func fetchResource(c *gin.Context) {
 
-	return func(c *gin.Context) {}
 }
 
-func buildUrl(base string, options, hash map[string]string) *url.URL {
+func buildUrl(base string, options, hash *map[string]string) string {
 	newUrl, err := url.Parse(base)
 	if err != nil {
-		return nil
+		return ""
 	}
 
 	q := newUrl.Query()
-	for k, v := range options {
+	for k, v := range *options {
 		q.Set(k, v)
 	}
 	newUrl.RawQuery = q.Encode()
-	return newUrl
+	return newUrl.String()
 }
 
-func encodeClientCredentials(clientId, clientSecret string) *base64.Encoding {
-	return base64.NewEncoding(url.QueryEscape(clientId) + ":" + url.QueryEscape(clientSecret))
+func encodeClientCredentials(clientId, clientSecret string) string {
+	return url.QueryEscape(clientId) + ":" + url.QueryEscape(clientSecret)
 }
