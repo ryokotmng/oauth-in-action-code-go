@@ -7,4 +7,4 @@ install-tools:
 
 .PHONY: fmt
 fmt:
-	goimports -l -w $$(find . -name "*.go")
+	goimports -l -w -local "github.com/ryokotmng/oauth-in-action-code-go" $$(find . -name "*.go")

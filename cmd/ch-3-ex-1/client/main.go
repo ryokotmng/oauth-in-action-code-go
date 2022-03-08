@@ -11,8 +11,8 @@ import (
 	"net/url"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ryokotmng/oauth-in-action-code-go/cmd/ch-3-ex-1/pkg"
-	"github.com/ryokotmng/oauth-in-action-code-go/cmd/ch-3-ex-1/pkg/randomstring"
+
+	"github.com/ryokotmng/oauth-in-action-code-go/pkg"
 )
 
 // authorization server information
@@ -69,7 +69,7 @@ func main() {
 }
 
 func authorize(c *gin.Context) {
-	state := randomstring.Generate(32)
+	state := pkg.RandomString(32)
 	authorizeUrl := buildUrl(authorizationEndpoint, &map[string]string{
 		"responseType": "code",
 		"clientId":     demoClient.clientId,

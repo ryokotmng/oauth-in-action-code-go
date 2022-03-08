@@ -1,4 +1,4 @@
-package randomstring
+package pkg
 
 import (
 	"math/rand"
@@ -11,7 +11,7 @@ func init() {
 
 var rs1Letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-func Generate(n int) string {
+func RandomString(n int) string {
 	b := make([]rune, n)
 	for i := range b {
 		b[i] = rs1Letters[rand.Intn(len(rs1Letters))]

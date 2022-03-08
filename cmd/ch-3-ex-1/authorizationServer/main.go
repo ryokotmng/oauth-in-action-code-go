@@ -4,7 +4,6 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
@@ -70,7 +69,7 @@ func authorize(c *gin.Context) {
 	}
 
 	uri := c.Request.URL.Query().Get("redirectUri")
-	if !contains(cl.RedirectURIs, uri) {
+	if !pkg.Contains(cl.RedirectURIs, uri) {
 		fmt.Sprintf("Mismatched redirect URI, expected %s got %s", cl.RedirectURIs, uri)
 		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": "Invalid redirect url"})
 		return
@@ -90,7 +89,7 @@ func authorize(c *gin.Context) {
 		return
 	}
 
-	reqid := randomString(8)
+	reqid := pkg.RandomString(8)
 
 	requests = map[string]url.Values{}
 	requests[reqid] = c.Request.URL.Query()
@@ -105,23 +104,4 @@ func approve(c *gin.Context) {
 }
 
 func token(c *gin.Context) {
-}
-
-func contains(sl []string, str string) bool {
-	for _, s := range sl {
-		if s == str {
-			return true
-		}
-	}
-	return false
-}
-
-func randomString(n int) string {
-	var letter = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letter[rand.Intn(len(letter))]
-	}
-	return string(b)
 }
