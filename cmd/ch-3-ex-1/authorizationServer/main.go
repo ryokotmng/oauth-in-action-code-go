@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/ryokotmng/oauth-in-action-code-go/pkg"
 )
 
 const (

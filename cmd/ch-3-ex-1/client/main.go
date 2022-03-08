@@ -5,13 +5,14 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/ryokotmng/oauth-in-action-code-go/cmd/ch-3-ex-1/pkg"
-	"github.com/ryokotmng/oauth-in-action-code-go/cmd/ch-3-ex-1/pkg/randomstring"
 	"html/template"
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/gin-gonic/gin"
+	"github.com/ryokotmng/oauth-in-action-code-go/cmd/ch-3-ex-1/pkg"
+	"github.com/ryokotmng/oauth-in-action-code-go/cmd/ch-3-ex-1/pkg/randomstring"
 )
 
 // authorization server information

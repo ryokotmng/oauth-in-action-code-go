@@ -5,11 +5,12 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"html/template"
 	"net/http"
 	"strings"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 var resourceDetail = map[string]string{

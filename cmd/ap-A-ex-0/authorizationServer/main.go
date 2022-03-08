@@ -15,18 +15,18 @@ const (
 )
 
 type client struct {
-	clientId string
+	clientId     string
 	clientSecret string
 	redirectURIs []string
-	scope string
+	scope        string
 }
 
 var clients = []client{
 	{
-		clientId: "oauth-client-1",
+		clientId:     "oauth-client-1",
 		clientSecret: "oauth-client-secret-1",
-	    redirectURIs: []string{"http://localhost:9000/callback"},
-		scope: "foo bar",
+		redirectURIs: []string{"http://localhost:9000/callback"},
+		scope:        "foo bar",
 	},
 }
 
@@ -40,8 +40,8 @@ func main() {
 
 	router.GET("/", func(c *gin.Context) {
 		viewData := gin.H{
-			"clients":  clients,
-			"authServer":        "NONE",
+			"clients":    clients,
+			"authServer": "NONE",
 		}
 		c.HTML(http.StatusOK, "index.html", viewData)
 	})
