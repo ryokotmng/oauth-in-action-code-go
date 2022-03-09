@@ -19,10 +19,10 @@ const (
 )
 
 type client struct {
-	ClientId     string
-	ClientSecret string
-	RedirectURIs []string
-	Scope        string
+	ClientId     string   `json:"client_id"`
+	ClientSecret string   `json:"client_secret"`
+	RedirectURIs []string `json:"redirect_uris"`
+	Scope        string   `json:"scope"`
 }
 
 var clients = map[string]client{
@@ -61,14 +61,14 @@ func main() {
 }
 
 func authorize(c *gin.Context) {
-	clientID := c.Request.URL.Query().Get("clientId")
+	clientID := c.Request.URL.Query().Get("client_id")
 	cl, ok := clients[clientID]
 	if !ok {
 		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": "Unknown client"})
 		return
 	}
 
-	uri := c.Request.URL.Query().Get("redirectUri")
+	uri := c.Request.URL.Query().Get("redirect_uri")
 	if !pkg.Contains(cl.RedirectURIs, uri) {
 		fmt.Sprintf("Mismatched redirect URI, expected %s got %s", cl.RedirectURIs, uri)
 		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": "Invalid redirect url"})
@@ -94,10 +94,7 @@ func authorize(c *gin.Context) {
 	requests = map[string]url.Values{}
 	requests[reqid] = c.Request.URL.Query()
 
-	viewData := gin.H{
-		"client": cl, "reqid": reqid, "scope": rscope,
-	}
-	c.HTML(http.StatusOK, "approve.html", viewData)
+	c.HTML(http.StatusOK, "approve.html", gin.H{"client": cl, "reqid": reqid, "scope": rscope})
 }
 
 func approve(c *gin.Context) {

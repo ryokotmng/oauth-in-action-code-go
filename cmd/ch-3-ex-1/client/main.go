@@ -52,9 +52,6 @@ var clientFS embed.FS
 
 func main() {
 	router := gin.Default()
-	// tmpl := template.Must(template.New("").Funcs(template.FuncMap{"add": func(a, b int) int {
-	// 	return a + b
-	// }}).ParseFS(clientFS, "views/*.html"))
 	tmpl := template.Must(template.ParseFS(clientFS, "views/*.html"))
 	router.SetHTMLTemplate(tmpl)
 
@@ -71,10 +68,10 @@ func main() {
 func authorize(c *gin.Context) {
 	state := pkg.RandomString(32)
 	authorizeUrl := buildUrl(authorizationEndpoint, &map[string]string{
-		"responseType": "code",
-		"clientId":     demoClient.clientId,
-		"redirectUri":  demoClient.redirectURIs[0],
-		"state":        state,
+		"response_type": "code",
+		"client_id":     demoClient.clientId,
+		"redirect_uri":  demoClient.redirectURIs[0],
+		"state":         state,
 	}, nil)
 
 	c.Writer.Status()
