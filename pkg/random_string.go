@@ -11,8 +11,8 @@ func init() {
 
 var rs1Letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-func RandomString(n int) string {
-	b := make([]rune, n)
+func RandomString(length int) string {
+	b := make([]rune, length)
 	for i := range b {
 		b[i] = rs1Letters[rand.Intn(len(rs1Letters))]
 	}

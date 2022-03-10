@@ -38,33 +38,26 @@
 
       <div class="jumbotron">
 		  <h2>Approve this client?</h2>
-		  {{ if ne .client.ClientName nil }}
-		  <p><b>Name:</b> <code>{{ .client.ClientName }}</code></p>
-		  {{ end }}
-		  <p><b>ID:</b> <code>{{ .client.ClientId }}</code></p>
-		  {{ if ne .client.ClientUri nil }}
-		  <p><b>URI:</b> <code>{{ .client.ClientUri }}</code></p>
-		  {{ end }}
-		  {{ if ne .client.LogoUri  nil }}
-		  <p><b>logo:</b> <img src="{{ .client.LogoUri }}" /></p>
-		  {{ end }}
+          {{ if ne .client.ClientId "" }}
+          <p><b>ID:</b> <code>{{ .client.ClientId }}</code></p>
+          {{ end }}
 
-		   <form class="form" action="/approve" method="POST">
-			   <input type="hidden" name="reqid" value="{{ .reqid }}">
-			   {{ if ne .scopes nil }}
-			   <p>The client is requesting access to the following:</p>
-			   <ul>
-			      {{ range $_, $s := .scopes }}
-			   	  <li><input type="checkbox" name="scope_{{ $s }}" id="scope_{{ $s }}" checked="checked"> <label for="scope_{{ $s }}">{{ $s }}</label></li>
-				  {{ end }}
-		       </ul>
-			   {{ end }}
-			   <input type="submit" class="btn btn-success" name="approve" value="Approve">
-			   <input type="submit" class="btn btn-danger" name="deny" value="Deny">
-		   </form>
-      </div>
+		  <form class="form" action="/approve" method="POST">
+              <input type="hidden" name="reqid" value={{ .reqid }}>
+              {{ if gt (len .scope) 1 }}
+              <p>The client is requesting access to the following:</p>
+              <ul>
+                 {{ range $_, $s := .scope }}
+                 <li><input type="checkbox" name="scope_{{ $s }}" id="scope_{{ $s }}" checked="checked"> <label for="scope_{{ $s }}">{{ $s }}</label></li>
+                 {{ end }}
+              </ul>
+              {{ end }}
+              <input type="submit" class="btn btn-success" name="approve" value="Approve">
+              <input type="submit" class="btn btn-danger" name="deny" value="Deny">
+		  </form>
+        </div>
 
-    </div><!-- /.container -->
+      </div><!-- /.container -->
 
 	
 	

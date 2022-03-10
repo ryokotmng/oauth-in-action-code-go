@@ -38,7 +38,7 @@ var demoClient = client{
 }
 
 type tokenResponseBody struct {
-	accessToken string `json:"access_token"`
+	AccessToken string `json:"access_token"`
 }
 
 var (
@@ -66,7 +66,7 @@ func main() {
 }
 
 func authorize(c *gin.Context) {
-	state := pkg.RandomString(32)
+	state = pkg.RandomString(32)
 	authorizeUrl := buildUrl(authorizationEndpoint, &map[string]string{
 		"response_type": "code",
 		"client_id":     demoClient.clientId,
@@ -86,13 +86,13 @@ func callback(c *gin.Context) {
 		return
 	}
 
-	if s := pkg.GetStateFromContext(c.Request.Context()); s != state {
-		fmt.Printf("State DOES NOT MATCH: expected %s got %s", state, s)
+	if s := c.Query("state"); s != state {
+		fmt.Printf("State DOES NOT MATCH: expected %s got %s \n", state, s)
 		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": "State value did not match"})
 		return
 	}
 
-	code := pkg.GetCodeFromContext(c)
+	code := c.Query("code")
 
 	formData, err := json.Marshal(map[string]string{
 		"grant_type":   "authorization_code",
@@ -104,15 +104,19 @@ func callback(c *gin.Context) {
 		return
 	}
 
-	c.Header("Content-Type", "application/x-www-form-urlencoded")
-	c.Header("Authorization", "Basic "+encodeClientCredentials(demoClient.clientId, demoClient.clientSecret))
-
-	tokRes, err := http.Post(tokenEndpoint, "application/json", bytes.NewBuffer(formData))
+	req, err := http.NewRequest(http.MethodPost, tokenEndpoint, bytes.NewBuffer(formData))
+	if err != nil {
+		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+		return
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Authorization", "Basic "+encodeClientCredentials(demoClient.clientId, demoClient.clientSecret))
+	tokRes, err := http.DefaultClient.Do(req)
 	if err != nil {
 		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
 	}
 
-	fmt.Printf("Requesting access token for code %s", code)
+	fmt.Printf("Requesting access token for code %s \n", code)
 	if tokRes.StatusCode >= 200 && tokRes.StatusCode < 300 {
 		body, err := io.ReadAll(tokRes.Body)
 		if err != nil {
@@ -130,7 +134,8 @@ func callback(c *gin.Context) {
 			c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": fmt.Sprintf("Unable to fetch access token, err: %v", err.Error())})
 			return
 		}
-		fmt.Printf("Got access token: %s", resBody.accessToken)
+		accessToken = resBody.AccessToken
+		fmt.Printf("Got access token: %s \n", accessToken)
 
 		c.HTML(http.StatusOK, "index.html", gin.H{"accessToken": accessToken, "scope": scope})
 		return
@@ -140,7 +145,29 @@ func callback(c *gin.Context) {
 }
 
 func fetchResource(c *gin.Context) {
+	if accessToken == "" {
+		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": "Missing Access Token"})
+		return
+	}
 
+	fmt.Printf("Making request with access token %s \n", accessToken)
+
+	req, err := http.NewRequest("POST", protectedResource, nil)
+	if err != nil {
+		return
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	resource, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return
+	}
+	if resource.StatusCode >= 200 && resource.StatusCode < 300 {
+		body := resource.Body
+		c.HTML(http.StatusOK, "data.html", gin.H{"resource": body})
+		return
+	}
+	accessToken = ""
+	c.HTML(resource.StatusCode, "error.html", gin.H{"error": resource.StatusCode})
 }
 
 func buildUrl(base string, options, hash *map[string]string) string {
