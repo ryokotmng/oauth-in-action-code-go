@@ -162,8 +162,14 @@ func fetchResource(c *gin.Context) {
 		return
 	}
 	if resource.StatusCode >= 200 && resource.StatusCode < 300 {
-		body := resource.Body
-		c.HTML(http.StatusOK, "data.html", gin.H{"resource": body})
+		bodyReader := resource.Body
+		body, err := io.ReadAll(bodyReader)
+		if err != nil {
+			c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+		}
+		var bodyData interface{}
+		json.Unmarshal(body, &bodyData)
+		c.HTML(http.StatusOK, "data.html", gin.H{"resource": bodyData})
 		return
 	}
 	accessToken = ""
