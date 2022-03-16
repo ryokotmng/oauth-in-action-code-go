@@ -13,6 +13,9 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
+
+	"github.com/ryokotmng/oauth-in-action-code-go/pkg"
 )
 
 var resourceDetail = map[string]string{
@@ -66,7 +69,15 @@ func getAccessToken(c *gin.Context) {
 	}
 	fmt.Printf("Incoming token: %s \n", inToken)
 
-	c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), "access_token", inToken))
+	redisClient := pkg.NewRedisClient()
+	token, err := redisClient.Get(c, inToken).Result()
+	if err != redis.Nil {
+		fmt.Printf("We found a matching token: %s \n", inToken)
+	} else {
+		fmt.Println("no matching token was found.")
+	}
+
+	c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), "access_token", token))
 }
 
 func resource(c *gin.Context) {

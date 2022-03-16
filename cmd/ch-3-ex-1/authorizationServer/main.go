@@ -243,7 +243,16 @@ func token(c *gin.Context) {
 				if code.scope != nil {
 					cscope = strings.Join(code.scope, " ")
 				}
-				// TODO: access to Redis
+
+				redisClient := pkg.NewRedisClient()
+				record, err := json.Marshal(pkg.SessionRecord{AccessToken: accessToken})
+				if err != nil {
+					fmt.Printf("Failed to register access token. err: %s \n", err.Error())
+				}
+				err = redisClient.Set(c, accessToken, record, 0).Err()
+				if err != nil {
+					fmt.Printf("Failed to register access token. err: %s \n", err.Error())
+				}
 
 				fmt.Printf("Issuing access token %s \n", accessToken)
 				fmt.Printf("with scope %s \n", cscope)
