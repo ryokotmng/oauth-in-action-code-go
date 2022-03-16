@@ -34,7 +34,7 @@ func getAccessToken(c *gin.Context) {
 	}
 	fmt.Printf("Incoming token: %s", inToken)
 	// TODO: put the generated token into Redis
-	c.Request.WithContext(context.WithValue(c, "access_token", inToken))
+	c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), "access_token", inToken))
 }
 
 func main() {
@@ -52,18 +52,19 @@ func main() {
 }
 
 func resource(c *gin.Context) {
-	if getRequestTokenFromContext(c) != "" {
+	fmt.Println(getAccessTokenFromContext(c))
+	if getAccessTokenFromContext(c) != "" {
 		c.JSON(200, resourceDetail)
 	} else {
 		c.Error(errors.New(""))
 	}
 }
 
-func getRequestTokenFromContext(c *gin.Context) string {
+func getAccessTokenFromContext(c *gin.Context) string {
 	if c == nil {
 		return ""
 	}
-	if token, ok := c.Value("access_token").(string); ok {
+	if token, ok := c.Request.Context().Value("access_token").(string); ok {
 		return token
 	}
 	return ""
