@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
 	"strings"
 
@@ -21,22 +23,6 @@ var resourceDetail = map[string]string{
 //go:embed views
 var clientFS embed.FS
 
-func getAccessToken(c *gin.Context) {
-	// check the auth header first
-	auth := c.Request.Header.Get("authorization")
-	var inToken string
-	if auth != "" && strings.Contains(strings.ToLower(auth), "bearer") {
-		inToken = auth
-	} else if c.Request.Body != nil {
-		// not in the header, check in the form body
-	} else {
-		inToken = ""
-	}
-	fmt.Printf("Incoming token: %s", inToken)
-	// TODO: put the generated token into Redis
-	c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), "access_token", inToken))
-}
-
 func main() {
 	router := gin.Default()
 	tmpl := template.Must(template.ParseFS(clientFS, "views/index.html"))
@@ -49,6 +35,38 @@ func main() {
 	router.POST("/resource", resource)
 	router.Run(":9002")
 	fmt.Println("OAuth Resource Server is listening at http://localhost:9002")
+}
+
+func getAccessToken(c *gin.Context) {
+	// check the auth header first
+	auth := c.Request.Header.Get("authorization")
+	var inToken string
+	if auth != "" && strings.Contains(strings.ToLower(auth), "bearer") {
+		inToken = strings.Replace(auth, "Bearer ", "", 1)
+	} else if c.Request.Body != nil {
+		// not in the header, check in the form body
+		body, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+		}
+		defer func() {
+			err := c.Request.Body.Close()
+			if err != nil {
+				c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+			}
+		}()
+		type requestBody struct {
+			accessToken string `json:"access_token"`
+		}
+		var b requestBody
+		json.Unmarshal(body, &b)
+		inToken = b.accessToken
+	} else if c.Query("access_token") != "" {
+		inToken = c.Query("access_token")
+	}
+	fmt.Printf("Incoming token: %s \n", inToken)
+
+	c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), "access_token", inToken))
 }
 
 func resource(c *gin.Context) {
