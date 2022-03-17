@@ -38,7 +38,7 @@
 
       <div class="jumbotron">
 		  <h2>Client information:</h2>
-		  {{ range $_, $client := .clients }}
+		  {{ range $client := .clients }}
 		  <ul>
 			  <li><b>client_id:</b> <code>{{ $client.ClientId }}</code></li>
 			  <li><b>client_secret:</b> <code>{{ $client.ClientSecret }}</code></li>

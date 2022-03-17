@@ -38,8 +38,10 @@
 
       <div class="jumbotron">
 		  <p>Access token value: <span class="label label-danger">{{ .accessToken }}</span></p>
-		  <a class="btn btn-default" href="/authorize">Get OAuth Token</a> 
-		  <a class="btn btn-default" href="/fetch_resource">Get Protected Resource</a> 
+          <p>Scope value: <span class="label label-danger">{{if eq .scope nil}}NONE{{else}}{{.scope}}{{end}}</span></p>
+          <p>Refresh token value: <span class="label label-danger">{{if eq .refreshToken nil}}NONE{{else}}{{.refreshToken}}{{end}}</span></p>
+		  <a class="btn btn-default" href="/authorize">Get OAuth Token</a>
+		  <a class="btn btn-default" href="/fetch_resource">Get Protected Resource</a>
       </div>
 
     </div><!-- /.container -->
