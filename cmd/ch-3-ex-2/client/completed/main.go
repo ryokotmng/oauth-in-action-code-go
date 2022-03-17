@@ -51,7 +51,8 @@ var (
 	accessToken  = "987tghjkiu6trfghjuytrghj"
 )
 
-//go:embed views
+// move this file to "client" folder and uncomment this to use view files
+// //go:embed views
 var clientFS embed.FS
 
 func main() {
@@ -183,18 +184,63 @@ func fetchResource(c *gin.Context) {
 		c.HTML(http.StatusOK, "data.html", gin.H{"resource": bodyData})
 		return
 	}
-	/*
-	 * instead of always returning an error like we do here, refresh the access token if we have a refresh token
-	 */
-	c.HTML(resource.StatusCode, "error.html", gin.H{"error": "Unable to fetch resource. Status " + string(resource.StatusCode)})
+	accessToken = ""
+	if refreshToken != "" {
+		refreshAccessToken(c)
+		return
+	}
+	c.HTML(resource.StatusCode, "error.html", gin.H{"error": resource.StatusCode})
 }
 
 func refreshAccessToken(c *gin.Context) {
+	formData, err := json.Marshal(map[string]string{
+		"grant_type":    "authorization_code",
+		"refresh_token": refreshToken,
+	})
+	if err != nil {
+		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+		return
+	}
+	req, err := http.NewRequest("POST", tokenEndpoint, bytes.NewBuffer(formData))
+	if err != nil {
+		return
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	fmt.Printf("Refreshing token %s \n", refreshToken)
+	tokRes, err := http.DefaultClient.Do(req)
+	if err != nil {
+		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+		return
+	}
+	if tokRes.StatusCode >= 200 && tokRes.StatusCode < 300 {
+		bodyReader := tokRes.Body
+		body, err := io.ReadAll(bodyReader)
+		if err != nil {
+			c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+		}
+		var bodyData tokenResponseBody
+		err = json.Unmarshal(body, &bodyData)
+		if err != nil {
+			c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+			return
+		}
+		fmt.Printf("Got access token: %s \n", bodyData.AccessToken)
+		if bodyData.RefreshToken != "" {
+			refreshToken = bodyData.RefreshToken
+			fmt.Printf("Got refresh token: %s \n", refreshToken)
+		}
+		scope = bodyData.Scope
+		fmt.Printf("Got scope :%s \n", scope)
 
-	/*
-	 * Use the refresh token to get a new access token
-	 */
-
+		// try again
+		c.Redirect(302, "/fetch_resource")
+		return
+	}
+	fmt.Println("No refresh token, asking the user to get a new access token")
+	// tell the user to get a new access token
+	refreshToken = ""
+	c.HTML(tokRes.StatusCode, "error.html", gin.H{"error": "Unable to refresh token."})
 }
 
 func buildUrl(base string, options, hash *map[string]string) string {
