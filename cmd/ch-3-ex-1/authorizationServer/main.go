@@ -75,6 +75,7 @@ func authorize(c *gin.Context) {
 	clientID := c.Request.URL.Query().Get("client_id")
 	cl, ok := clients[clientID]
 	if !ok {
+		fmt.Printf("Unknown client %s \n", clientID)
 		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": "Unknown client"})
 		return
 	}
@@ -268,7 +269,7 @@ func token(c *gin.Context) {
 			return
 		}
 		fmt.Printf("Unknown Code, %s \n", reqBody.Code)
-		c.JSON(400, gin.H{"error": "unsupported_grant_type"})
+		c.JSON(400, gin.H{"error": "invalid_grant"})
 		return
 	}
 	fmt.Printf("Unknown grant type %s \n", reqBody.GrantType)

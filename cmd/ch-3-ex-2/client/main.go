@@ -234,6 +234,7 @@ func refreshAccessToken(c *gin.Context) {
 		return
 	}
 	fmt.Println("No refresh token, asking the user to get a new access token")
+	// tell the user to get a new access token
 	refreshToken = ""
 	c.HTML(tokRes.StatusCode, "error.html", gin.H{"error": "Unable to refresh token."})
 }

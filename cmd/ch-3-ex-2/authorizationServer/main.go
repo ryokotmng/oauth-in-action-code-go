@@ -4,6 +4,7 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"html/template"
 	"io"
 	"net/http"
@@ -51,6 +52,13 @@ type tokenRequestBody struct {
 	ClientSecret string `json:"client_secret"`
 	GrantType    string `json:"grant_type"`
 	Code         string `json:"code"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+type tokenResponseBody struct {
+	accessToken  string `json:"access_token"`
+	tokenType    string `json:"token_type"`
+	refreshToken string `json:"refresh_token"`
 }
 
 //go:embed views
@@ -75,6 +83,7 @@ func authorize(c *gin.Context) {
 	clientID := c.Request.URL.Query().Get("client_id")
 	cl, ok := clients[clientID]
 	if !ok {
+		fmt.Printf("Unknown client %s \n", clientID)
 		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": "Unknown client"})
 		return
 	}
@@ -229,6 +238,8 @@ func token(c *gin.Context) {
 		return
 	}
 
+	redisClient := pkg.NewRedisClient()
+
 	if reqBody.GrantType == "authorization_code" {
 
 		code := codes[reqBody.Code]
@@ -244,7 +255,6 @@ func token(c *gin.Context) {
 					cscope = strings.Join(code.scope, " ")
 				}
 
-				redisClient := pkg.NewRedisClient()
 				record, err := json.Marshal(pkg.SessionRecord{AccessToken: accessToken})
 				if err != nil {
 					fmt.Printf("Failed to register access token. err: %s \n", err.Error())
@@ -268,8 +278,27 @@ func token(c *gin.Context) {
 			return
 		}
 		fmt.Printf("Unknown Code, %s \n", reqBody.Code)
-		c.JSON(400, gin.H{"error": "unsupported_grant_type"})
+		c.JSON(400, gin.H{"error": "invalid_grant"})
 		return
+	} else if reqBody.GrantType == "refresh_token" {
+		token, err := redisClient.Get(c, reqBody.RefreshToken).Result()
+		if err != redis.Nil {
+			fmt.Printf("Invalid client using a refresh token, expected %s got %s \n", token, clientId)
+			//redisClient.Del(c, reqBody.RefreshToken)
+			//c.JSON(400, gin.H{"error": "unsupported_grant_type"})
+			fmt.Printf("We found a matching refresh token: %s", reqBody.RefreshToken)
+			accessToken := pkg.RandomString(32)
+			tokenResponse, err := json.Marshal(tokenResponseBody{accessToken, "Bearer", reqBody.RefreshToken})
+			if err != nil {
+				fmt.Printf("Error %s \n", err.Error())
+				return
+			}
+			fmt.Printf("Issuing access token %s for refresh token %s \n", accessToken, reqBody.RefreshToken)
+			c.JSON(200, tokenResponse)
+		} else {
+			fmt.Println("No matching token was found.")
+			c.HTML(http.StatusUnauthorized, "error.html", nil)
+		}
 	}
 	fmt.Printf("Unknown grant type %s \n", reqBody.GrantType)
 	c.JSON(400, gin.H{"error": "unsupported_grant_type"})
