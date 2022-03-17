@@ -32,13 +32,6 @@ type client struct {
 	scope        string
 }
 
-var demoClient = client{
-	clientId:     "oauth-client-1",
-	clientSecret: "oauth-client-secret-1",
-	redirectURIs: []string{"http://localhost:9000/callback"},
-	scope:        "foo",
-}
-
 type tokenResponseBody struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
@@ -46,8 +39,14 @@ type tokenResponseBody struct {
 }
 
 var (
-	state        string
-	scope        string
+	state      string
+	scope      string
+	demoClient = client{
+		clientId:     "oauth-client-1",
+		clientSecret: "oauth-client-secret-1",
+		redirectURIs: []string{"http://localhost:9000/callback"},
+		scope:        "foo",
+	}
 	refreshToken = "j2r3oj32r23rmasd98uhjrk2o3i"
 	accessToken  = "987tghjkiu6trfghjuytrghj"
 )

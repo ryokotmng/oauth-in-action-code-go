@@ -4,12 +4,13 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
-	"github.com/go-redis/redis/v8"
 	"html/template"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/go-redis/redis/v8"
 
 	"github.com/gin-gonic/gin"
 
@@ -28,24 +29,11 @@ type client struct {
 	Scope        string   `json:"scope"`
 }
 
-var clients = map[string]*client{
-	"oauth-client-1": {
-		ClientId:     "oauth-client-1",
-		ClientSecret: "oauth-client-secret-1",
-		RedirectURIs: []string{"http://localhost:9000/callback"},
-		Scope:        "foo bar",
-	},
-}
-
 type approveReq struct {
 	authorizationEndPointRequest url.Values
 	scope                        []string
 	user                         string
 }
-
-var codes map[string]*approveReq
-
-var requests map[string]url.Values
 
 type tokenRequestBody struct {
 	ClientID     string `json:"client_id"`
@@ -60,6 +48,19 @@ type tokenResponseBody struct {
 	tokenType    string `json:"token_type"`
 	refreshToken string `json:"refresh_token"`
 }
+
+var (
+	codes    map[string]*approveReq
+	requests map[string]url.Values
+	clients  = map[string]*client{
+		"oauth-client-1": {
+			ClientId:     "oauth-client-1",
+			ClientSecret: "oauth-client-secret-1",
+			RedirectURIs: []string{"http://localhost:9000/callback"},
+			Scope:        "foo bar",
+		},
+	}
+)
 
 //go:embed views
 var clientFS embed.FS

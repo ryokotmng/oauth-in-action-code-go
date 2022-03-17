@@ -25,12 +25,6 @@ type client struct {
 	redirectURIs []string
 }
 
-var demoClient = client{
-	clientId:     "oauth-client-1",
-	clientSecret: "oauth-client-secret-1",
-	redirectURIs: []string{"http://localhost:9000/callback"},
-}
-
 type tokenResponseBody struct {
 	AccessToken string `json:"access_token"`
 }
@@ -39,6 +33,11 @@ var (
 	state       string
 	accessToken string
 	scope       string
+	demoClient  = client{
+		clientId:     "oauth-client-1",
+		clientSecret: "oauth-client-secret-1",
+		redirectURIs: []string{"http://localhost:9000/callback"},
+	}
 )
 
 //go:embed views

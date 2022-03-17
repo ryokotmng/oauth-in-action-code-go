@@ -27,24 +27,11 @@ type client struct {
 	Scope        string   `json:"scope"`
 }
 
-var clients = map[string]*client{
-	"oauth-client-1": {
-		ClientId:     "oauth-client-1",
-		ClientSecret: "oauth-client-secret-1",
-		RedirectURIs: []string{"http://localhost:9000/callback"},
-		Scope:        "foo bar",
-	},
-}
-
 type approveReq struct {
 	authorizationEndPointRequest url.Values
 	scope                        []string
 	user                         string
 }
-
-var codes map[string]*approveReq
-
-var requests map[string]url.Values
 
 type tokenRequestBody struct {
 	ClientID     string `json:"client_id"`
@@ -52,6 +39,19 @@ type tokenRequestBody struct {
 	GrantType    string `json:"grant_type"`
 	Code         string `json:"code"`
 }
+
+var (
+	codes    map[string]*approveReq
+	requests map[string]url.Values
+	clients  = map[string]*client{
+		"oauth-client-1": {
+			ClientId:     "oauth-client-1",
+			ClientSecret: "oauth-client-secret-1",
+			RedirectURIs: []string{"http://localhost:9000/callback"},
+			Scope:        "foo bar",
+		},
+	}
+)
 
 //go:embed views
 var clientFS embed.FS
