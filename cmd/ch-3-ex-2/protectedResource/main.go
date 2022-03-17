@@ -70,14 +70,14 @@ func getAccessToken(c *gin.Context) {
 	fmt.Printf("Incoming token: %s \n", inToken)
 
 	redisClient := pkg.NewRedisClient()
-	token, err := redisClient.Get(c, inToken).Result()
+	err := redisClient.Get(c, "access_token"+inToken).Err()
 	if err != redis.Nil {
 		fmt.Printf("We found a matching token: %s \n", inToken)
 	} else {
 		fmt.Println("no matching token was found.")
 	}
 
-	c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), "access_token", token))
+	c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), "access_token", inToken))
 }
 
 func resource(c *gin.Context) {

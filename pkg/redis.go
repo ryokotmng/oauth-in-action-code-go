@@ -2,8 +2,8 @@ package pkg
 
 import "github.com/go-redis/redis/v8"
 
-type SessionRecord struct {
-	AccessToken string `json:"access_token"`
+type TokenRecord struct {
+	ClientID string `json:"client_id"`
 }
 
 func NewRedisClient() *redis.Client {

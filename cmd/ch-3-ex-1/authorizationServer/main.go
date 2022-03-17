@@ -230,6 +230,8 @@ func token(c *gin.Context) {
 		return
 	}
 
+	redisClient := pkg.NewRedisClient()
+
 	if reqBody.GrantType == "authorization_code" {
 
 		code := codes[reqBody.Code]
@@ -245,12 +247,11 @@ func token(c *gin.Context) {
 					cscope = strings.Join(code.scope, " ")
 				}
 
-				redisClient := pkg.NewRedisClient()
-				record, err := json.Marshal(pkg.SessionRecord{AccessToken: accessToken})
+				record, err := json.Marshal(pkg.TokenRecord{ClientID: clientId})
 				if err != nil {
 					fmt.Printf("Failed to register access token. err: %s \n", err.Error())
 				}
-				err = redisClient.Set(c, accessToken, record, 0).Err()
+				err = redisClient.Set(c, "access_token"+accessToken, record, 0).Err()
 				if err != nil {
 					fmt.Printf("Failed to register access token. err: %s \n", err.Error())
 				}

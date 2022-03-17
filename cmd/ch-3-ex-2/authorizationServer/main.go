@@ -186,13 +186,13 @@ func approve(c *gin.Context) {
 
 func token(c *gin.Context) {
 	auth := c.Request.Header.Get("authorization")
-	var clientId string
+	var clientID string
 	var clientSecret string
 	if auth != "" {
 		// check the auth header
 		clientCredentials := strings.Split(strings.Replace(auth, "Basic ", "", 1), ":")
 
-		clientId = clientCredentials[0]
+		clientID = clientCredentials[0]
 		clientSecret = clientCredentials[1]
 	}
 
@@ -214,18 +214,18 @@ func token(c *gin.Context) {
 		return
 	}
 	if reqBody.ClientID != "" {
-		if clientId != "" {
+		if clientID != "" {
 			// if we've already seen the client's credentials in the authorization header, this is an error
 			fmt.Println("Client attempted to authenticate with multiple methods")
 			c.JSON(401, gin.H{"error": "invalid_client"})
 			return
 		}
 
-		clientId = reqBody.ClientID
+		clientID = reqBody.ClientID
 		clientSecret = reqBody.ClientSecret
 	}
 
-	client := clients[clientId]
+	client := clients[clientID]
 	if client == nil {
 		fmt.Printf("Unknown client %s \n", client)
 		c.JSON(401, gin.H{"error": "invalid_client"})
@@ -246,7 +246,7 @@ func token(c *gin.Context) {
 
 		if code != nil {
 			delete(codes, reqBody.Code) // burn our Code, it's been used
-			if code.authorizationEndPointRequest.Get("client_id") == clientId {
+			if code.authorizationEndPointRequest.Get("client_id") == clientID {
 
 				accessToken := pkg.RandomString(32)
 
@@ -255,7 +255,7 @@ func token(c *gin.Context) {
 					cscope = strings.Join(code.scope, " ")
 				}
 
-				record, err := json.Marshal(pkg.SessionRecord{AccessToken: accessToken})
+				record, err := json.Marshal(pkg.TokenRecord{ClientID: clientID})
 				if err != nil {
 					fmt.Printf("Failed to register access token. err: %s \n", err.Error())
 				}
@@ -281,11 +281,13 @@ func token(c *gin.Context) {
 		c.JSON(400, gin.H{"error": "invalid_grant"})
 		return
 	} else if reqBody.GrantType == "refresh_token" {
-		token, err := redisClient.Get(c, reqBody.RefreshToken).Result()
+		cID, err := redisClient.Get(c, "refresh_token"+reqBody.RefreshToken).Result()
 		if err != redis.Nil {
-			fmt.Printf("Invalid client using a refresh token, expected %s got %s \n", token, clientId)
-			//redisClient.Del(c, reqBody.RefreshToken)
-			//c.JSON(400, gin.H{"error": "unsupported_grant_type"})
+			if cID != clientID {
+				fmt.Printf("Invalid client using a refresh token, expected %s got %s \n", cID, clientID)
+				redisClient.Del(c, reqBody.RefreshToken)
+				c.HTML(http.StatusBadRequest, "error.html", nil)
+			}
 			fmt.Printf("We found a matching refresh token: %s", reqBody.RefreshToken)
 			accessToken := pkg.RandomString(32)
 			tokenResponse, err := json.Marshal(tokenResponseBody{accessToken, "Bearer", reqBody.RefreshToken})
