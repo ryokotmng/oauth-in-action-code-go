@@ -26,8 +26,8 @@ $ make start-redis
 ```
 
 ## How to Use
-The folder structure is quite similar to [OAuth 2 in Action](https://github.com/oauthinaction/oauth-in-action-code), but the entry points for authorization server, client and protected resource are under each folder.  
-You should execute 'air' of 'go run main.go' command under each folder to start the server.  
+The folder structure is quite similar to [OAuth 2 in Action](https://github.com/oauthinaction/oauth-in-action-code), but the entry points for authorization, client and protected resource servers are under each folder.  
+You should execute 'air' of 'go run main.go' command under each folder in [cmd](https://github.com/ryokotmng/oauth-in-action-code-go/tree/main/cmd).  
 
 Ports are all same with the original repository, except for redis which replace over nosql.
 
