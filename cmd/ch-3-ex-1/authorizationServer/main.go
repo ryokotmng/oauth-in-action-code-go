@@ -110,8 +110,7 @@ func authorize(c *gin.Context) {
 }
 
 func approve(c *gin.Context) {
-	c.Request.ParseForm()
-	reqid := c.Request.Form.Get("reqid")
+	reqid := c.Request.FormValue("reqid")
 	query := requests[reqid]
 	delete(requests, reqid)
 	if query == nil {
@@ -120,12 +119,12 @@ func approve(c *gin.Context) {
 		return
 	}
 
-	if c.Request.Form.Get("approve") == "Approve" {
+	if c.Request.FormValue("approve") == "Approve" {
 		if query.Get("response_type") == "code" {
 			// user approved access
 			code := pkg.RandomString(8)
 
-			user := c.Request.Form.Get("user")
+			user := c.Request.FormValue("user")
 
 			var scope []string
 			for k, v := range c.Request.Form {
