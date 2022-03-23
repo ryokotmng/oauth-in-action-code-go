@@ -142,7 +142,7 @@ func callback(c *gin.Context) {
 		scope := resBody.Scope
 		fmt.Printf("Got scope: %s", scope)
 
-		c.HTML(http.StatusOK, "index.html", gin.H{"accessToken": accessToken, "scope": scope})
+		c.HTML(http.StatusOK, "index.html", gin.H{"accessToken": accessToken, "scope": scope, "refreshToken": refreshToken})
 		return
 	}
 
