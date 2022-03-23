@@ -9,28 +9,15 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/oauth2"
 
 	"github.com/ryokotmng/oauth-in-action-code-go/pkg"
 )
 
-// authorization server information
-const (
-	// authServer
-	authorizationEndpoint = "http://localhost:9001/authorize"
-	tokenEndpoint         = "http://localhost:9001/token"
-
-	protectedResource = "http://localhost:9002/resource"
-)
-
-// client information
-type client struct {
-	clientId     string
-	clientSecret string
-	redirectURIs []string
-	scope        string
-}
+const protectedResource = "http://localhost:9002/resource"
 
 type tokenResponseBody struct {
 	AccessToken  string `json:"access_token"`
@@ -39,13 +26,16 @@ type tokenResponseBody struct {
 }
 
 var (
-	state      string
-	scope      string
-	demoClient = client{
-		clientId:     "oauth-client-1",
-		clientSecret: "oauth-client-secret-1",
-		redirectURIs: []string{"http://localhost:9000/callback"},
-		scope:        "foo",
+	state  string
+	scope  string
+	client = &oauth2.Config{
+		ClientID:     "oauth-client-1",
+		ClientSecret: "oauth-client-secret-1",
+		RedirectURL:  "http://localhost:9000/callback",
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "http://localhost:9001/authorize",
+			TokenURL: "http://localhost:9001/token",
+		},
 	}
 	refreshToken = "j2r3oj32r23rmasd98uhjrk2o3i"
 	accessToken  = "987tghjkiu6trfghjuytrghj"
@@ -71,13 +61,13 @@ func main() {
 
 func authorize(c *gin.Context) {
 	state = pkg.RandomString(32)
-	authorizeUrl := buildUrl(authorizationEndpoint, &map[string]string{
+	authorizeUrl := buildUrl(client.Endpoint.AuthURL, &map[string]string{
 		"response_type": "code",
-		"scope":         demoClient.scope,
-		"client_id":     demoClient.clientId,
-		"redirect_uri":  demoClient.redirectURIs[0],
+		"scope":         strings.Join(client.Scopes, " "),
+		"client_id":     client.ClientID,
+		"redirect_uri":  client.RedirectURL,
 		"state":         state,
-	}, nil)
+	})
 
 	fmt.Printf("redirect %s \n", authorizeUrl)
 	c.Redirect(302, authorizeUrl)
@@ -102,20 +92,20 @@ func callback(c *gin.Context) {
 	formData, err := json.Marshal(map[string]string{
 		"grant_type":   "authorization_code",
 		"code":         code,
-		"redirect_uri": demoClient.redirectURIs[0],
+		"redirect_uri": client.RedirectURL,
 	})
 	if err != nil {
 		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
 		return
 	}
 
-	req, err := http.NewRequest(http.MethodPost, tokenEndpoint, bytes.NewBuffer(formData))
+	req, err := http.NewRequest(http.MethodPost, client.Endpoint.TokenURL, bytes.NewBuffer(formData))
 	if err != nil {
 		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
 		return
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Authorization", "Basic "+encodeClientCredentials(demoClient.clientId, demoClient.clientSecret))
+	req.Header.Set("Authorization", "Basic "+encodeClientCredentials(client.ClientID, client.ClientSecret))
 	tokRes, err := http.DefaultClient.Do(req)
 	if err != nil {
 		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
@@ -197,7 +187,7 @@ func refreshAccessToken(c *gin.Context) {
 
 }
 
-func buildUrl(base string, options, hash *map[string]string) string {
+func buildUrl(base string, options *map[string]string) string {
 	newUrl, err := url.Parse(base)
 	if err != nil {
 		return ""

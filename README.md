@@ -8,6 +8,9 @@ This repository is my try to translate [OAuth 2 in Action](https://github.com/oa
 - WAF: [Gin](https://github.com/gin-gonic/gin)
   - [CORS gin's middleware](https://github.com/gin-contrib/cors)
 - DB: [Redis](https://github.com/go-redis/redis)
+- Others:
+  - [oauth2](https://pkg.go.dev/golang.org/x/oauth2)
+    - NOTE: To understand detailed internal implementation, this repository does not use some useful features of this package
 
 ## Tools
 - File Watcher: [Air](https://github.com/cosmtrek/air)

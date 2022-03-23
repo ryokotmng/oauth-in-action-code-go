@@ -7,23 +7,10 @@ import (
 	"net/url"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/oauth2"
 )
 
-// authorization server information
-const (
-	// authServer
-	authorizationEndpoint = "http://localhost:9001/authorize"
-	tokenEndpoint         = "http://localhost:9001/token"
-
-	protectedResource = "http://localhost:9002/resource"
-)
-
-// client information
-type client struct {
-	clientId     string
-	clientSecret string
-	redirectURIs []string
-}
+const protectedResource = "http://localhost:9002/resource"
 
 type tokenResponseBody struct {
 	AccessToken string `json:"access_token"`
@@ -33,10 +20,14 @@ var (
 	state       string
 	accessToken string
 	scope       string
-	demoClient  = client{
-		clientId:     "oauth-client-1",
-		clientSecret: "oauth-client-secret-1",
-		redirectURIs: []string{"http://localhost:9000/callback"},
+	client      = &oauth2.Config{
+		ClientID:     "oauth-client-1",
+		ClientSecret: "oauth-client-secret-1",
+		RedirectURL:  "http://localhost:9000/callback",
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "http://localhost:9001/authorize",
+			TokenURL: "http://localhost:9001/token",
+		},
 	}
 )
 
@@ -82,7 +73,7 @@ func fetchResource(c *gin.Context) {
 
 }
 
-func buildUrl(base string, options, hash *map[string]string) string {
+func buildUrl(base string, options *map[string]string) string {
 	newUrl, err := url.Parse(base)
 	if err != nil {
 		return ""

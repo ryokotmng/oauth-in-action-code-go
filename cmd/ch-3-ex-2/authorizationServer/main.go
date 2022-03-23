@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/go-redis/redis/v8"
+	"golang.org/x/oauth2"
 
 	"github.com/gin-gonic/gin"
 
@@ -41,12 +42,6 @@ type tokenRequestBody struct {
 	GrantType    string `json:"grant_type"`
 	Code         string `json:"code"`
 	RefreshToken string `json:"refresh_token"`
-}
-
-type tokenResponseBody struct {
-	accessToken  string `json:"access_token"`
-	tokenType    string `json:"token_type"`
-	refreshToken string `json:"refresh_token"`
 }
 
 var (
@@ -291,7 +286,7 @@ func token(c *gin.Context) {
 			}
 			fmt.Printf("We found a matching refresh token: %s", reqBody.RefreshToken)
 			accessToken := pkg.RandomString(32)
-			tokenResponse, err := json.Marshal(tokenResponseBody{accessToken, "Bearer", reqBody.RefreshToken})
+			tokenResponse, err := json.Marshal(oauth2.Token{AccessToken: accessToken, TokenType: "Bearer", RefreshToken: reqBody.RefreshToken})
 			if err != nil {
 				fmt.Printf("Error %s \n", err.Error())
 				return
