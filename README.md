@@ -1,6 +1,10 @@
 # OAuth in Action in Go
 This repository is my try to translate [OAuth 2 in Action](https://github.com/oauthinaction/oauth-in-action-code) source code into Go.
 
+![Cover of OAuth 2 in Action](https://images.manning.com/255/340/resize/book/e/14336f9-6493-46dc-938c-11a34c9d20ac/Richer-OAuth2-HI.png)
+
+https://www.manning.com/books/oauth-2-in-action
+
 ## Requirement
 - Go 1.17
 
