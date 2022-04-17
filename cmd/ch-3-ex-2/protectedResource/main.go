@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"embed"
 	"encoding/json"
 	"errors"
@@ -58,12 +57,12 @@ func getAccessToken(c *gin.Context) {
 				c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
 			}
 		}()
-		type requestBody struct {
-			accessToken string `json:"access_token"`
+		type RequestBody struct {
+			AccessToken string `json:"access_token"`
 		}
-		var b requestBody
+		var b RequestBody
 		json.Unmarshal(body, &b)
-		inToken = b.accessToken
+		inToken = b.AccessToken
 	} else if c.Query("access_token") != "" {
 		inToken = c.Query("access_token")
 	}
@@ -77,24 +76,14 @@ func getAccessToken(c *gin.Context) {
 		fmt.Println("no matching token was found.")
 	}
 
-	c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), "access_token", inToken))
+	c.Request = pkg.SetAccessTokenKeyToContext(*c, inToken)
 }
 
 func resource(c *gin.Context) {
-	fmt.Println(getAccessTokenFromContext(c))
-	if getAccessTokenFromContext(c) != "" {
+	fmt.Println(pkg.GetAccessTokenFromContext(c))
+	if _, ok := pkg.GetAccessTokenFromContext(c); ok {
 		c.JSON(200, resourceDetail)
 	} else {
-		c.Error(errors.New(""))
+		c.Error(errors.New("no access token stored in context"))
 	}
-}
-
-func getAccessTokenFromContext(c *gin.Context) string {
-	if c == nil {
-		return ""
-	}
-	if token, ok := c.Request.Context().Value("access_token").(string); ok {
-		return token
-	}
-	return ""
 }
